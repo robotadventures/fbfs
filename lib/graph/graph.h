@@ -31,20 +31,23 @@ typedef struct interest {
  * this returns a NULL-terminated list of pointers to const user
  */
 const user **get_friends(const graph_session *, const user *, int);
-void free_users(const user **);
-void free_user(const user *);
+user *create_user(unsigned long, const char *);
+void destroy_users(const user **);
+void destroy_user(const user *);
 
 /**
  * this returns a NULL-terminated list of pointers to const post
  */
 const post **get_posts(const graph_session *, const user *, int);
-void free_posts(const post **);
-void free_post(const post *);
+post *create_post(unsigned long, const user *, const user *, const char *);
+void destroy_posts(const post **);
+void destroy_post(const post *);
 
 /**
  * this returns a NUL-terminated list of pointers to const interest
  */
 const interest **get_interests(const graph_session *, const user *, int);
-void free_interests(const interest **);
-void free_interest(const interest *);
+interest *create_interest(const char *);
+void destroy_interests(const interest **);
+void destroy_interest(const interest *);
 
