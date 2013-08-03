@@ -6,14 +6,14 @@
 user *create_user(unsigned long id, const char *name)
 {
         user *u = malloc(sizeof(user));
-        if (u == NULL) {
+        if (!u) {
                 perror("create_user malloc");
                 return NULL;
         }
         u->id = id;
 
         char *n = malloc((size_t) (strlen(name) + 1));
-        if (n == NULL) {
+        if (!n) {
                 perror("create_user malloc");
                 free(u);
                 return NULL;
