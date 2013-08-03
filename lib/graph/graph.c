@@ -3,7 +3,7 @@
  * Kaitlin Poskaitis, Joshua Matthews, and Wayne Chang
  */
 
-#include "graphapi.h"
+#include "graph.h"
 
 char **getFriends(char *access_token)
 {
