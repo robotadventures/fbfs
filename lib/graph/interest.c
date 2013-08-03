@@ -38,7 +38,7 @@ void destroy_interests(interests **is)
                 return;
         }
         while (*isr) {
-                destroy(*isr);
+                destroy_interest(*isr);
                 isr++;
         }
         free(is);

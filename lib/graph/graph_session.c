@@ -44,9 +44,7 @@ graph_session *create_graph_session(const char *access_token)
 void destroy_graph_session(graph_session *gs)
 {
         if (gs) {
-                if (gs->me) {
-                        destroy_user(gs->me);
-                }
+                destroy_user(gs->me);
                 if (gs->access_token) {
                         free(gs->access_token);
                 }
