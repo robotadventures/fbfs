@@ -1,7 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <curl/curl.h>
+#ifndef _GRAPH_H_
+#define _GRAPH_H_
 
 typedef struct user {
         unsigned long id;
@@ -50,4 +48,6 @@ const interest **get_interests(const graph_session *, const user *, int);
 interest *create_interest(const char *);
 void destroy_interests(const interest **);
 void destroy_interest(const interest *);
+
+#endif
 
