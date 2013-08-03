@@ -6,10 +6,6 @@ typedef struct user {
         char *name;
 } user;
 
-/**
- * access tokens are variable-length
- * https://developers.facebook.com/docs/facebook-login/access-tokens/
- **/
 typedef struct graph_session {
         user *me;
         char *access_token;
