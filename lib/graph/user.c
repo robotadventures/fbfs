@@ -34,10 +34,12 @@ void destroy_user(user *u)
 
 void destroy_users(users **us)
 {
-        while (us) {
-                destroy_user(*us);
-                us++;
+        users **usr = us;
+        while (usr) {
+                destroy_user(*usr);
+                usr++;
         }
+        free(us);
 }
 
 
