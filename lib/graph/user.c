@@ -27,7 +27,9 @@ user *create_user(unsigned long id, const char *name)
 void destroy_user(user *u)
 {
         if (u) {
-                free(u->name);
+                if (u->name) {
+                        free(u->name);
+                }
                 free(u);
         }
 }
