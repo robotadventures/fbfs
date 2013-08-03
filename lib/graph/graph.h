@@ -23,17 +23,28 @@ typedef struct post {
         const char *message;
 } post;
 
+typedef struct interest {
+        const char *name;
+} interest;
+
 /**
- * this returns a NULL-terminated list of pointers to const users
+ * this returns a NULL-terminated list of pointers to const user
  */
 const user **get_friends(const graph_session *, const user *, int);
 void free_users(const user **);
 void free_user(const user *);
 
 /**
- * this returns a NULL-terminated list of pointers to const posts
+ * this returns a NULL-terminated list of pointers to const post
  */
 const post **get_posts(const graph_session *, const user *, int);
 void free_posts(const post **);
 void free_post(const post *);
+
+/**
+ * this returns a NUL-terminated list of pointers to const interest
+ */
+const interest **get_interests(const graph_session *, const user *, int);
+void free_interests(const interest **);
+void free_interest(const interest *);
 
