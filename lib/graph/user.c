@@ -19,7 +19,7 @@ user *create_user(unsigned long id, const char *name)
                 return NULL;
         }
         strcpy(n, name);
-        u->name = (const char *)n;
+        u->name = n;
         
         return u;
 }
