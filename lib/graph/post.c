@@ -67,4 +67,17 @@ void destroy_posts(post **ps)
         free(ps);
 }
 
+void print_post(post *p)
+{
+        printf("post { id: %d, to: \"%s\", from: \"%s\", message: \"%s\" }\n",
+               p->id, p->to->name, p->from->name, p->message);
+}
+
+void print_posts(post **ps)
+{
+        while (*ps) {
+                print_post(*ps);
+                ps++;
+        }
+}
 

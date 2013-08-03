@@ -44,3 +44,16 @@ void destroy_interests(interests **is)
         free(is);
 }
 
+void print_interest(interest *i)
+{
+        printf("interest { name: \"%s\" }\n", i->name);
+}
+
+void print_interests(interest **is)
+{
+        while (*is) {
+                print_interest(*is);
+                is++;
+        }
+}
+

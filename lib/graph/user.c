@@ -47,3 +47,16 @@ void destroy_users(users **us)
         free(us);
 }
 
+void print_user(user *u)
+{
+        printf("user { id: %d, name: \"%s\" }\n", u->id, u->name);
+}
+
+void print_users(user **us)
+{
+        while (*us) {
+                print_user(*us);
+                us++;
+        }
+}
+
