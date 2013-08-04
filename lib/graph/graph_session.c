@@ -3,15 +3,6 @@
 
 #include "graph.h"
 
-user *retrieve_graph_user(const char *access_token)
-{
-        int id = 0;
-        char *name = "";
-        /* curl magic to get user */
-
-        return create_user(id, name);
-}
-
 graph_session *create_graph_session(const char *access_token)
 {
         graph_session *gs = malloc(sizeof(graph_session));

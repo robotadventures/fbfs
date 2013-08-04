@@ -6,6 +6,30 @@
 #include "util.h"
 #include "graph.h"
 
+user *retrieve_graph_user(char *access_token)
+{
+        int id;
+        char *name;
+        char *url = create_url("https://graph.facebook.com/me?fields=name&access_token=", access_token);
+        json_object *jobj;
+        json_object *name_obj;
+        json_object *id_obj;
+        user *u;
+
+        jobj = http_get_request_json(url);
+
+        json_object_object_get_ex(jobj, "name", &name_obj);
+        json_object_object_get_ex(jobj, "id", &id_obj);
+
+        name = (char *) json_object_get_string(name_obj);
+        id = (unsigned long) atoi(json_object_get_string(id_obj));
+
+        json_object_put(jobj);
+        free(url);
+
+        return create_user(id, name);
+}
+
 user **getFriends(char *access_token)
 {
     int i;

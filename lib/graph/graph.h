@@ -38,6 +38,7 @@ void print_user(user *);
 void print_users(user **);
 
 /* graph_session */
+user *retrieve_graph_user(char *access_token);
 graph_session *create_graph_session(const char *);
 void destroy_graph_session(graph_session *);
 void print_graph_session(graph_session *);
