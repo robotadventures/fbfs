@@ -83,7 +83,6 @@ user **get_friends(const graph_session *gs, int limit)
 
     json_object_put(jobj);
     free(url);
-    free(friend_name);
 
     return friends_arr;
 }
