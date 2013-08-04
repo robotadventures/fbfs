@@ -6,7 +6,7 @@
 #include "util.h"
 #include "graph.h"
 
-user *retrieve_graph_user(char *access_token)
+user *retrieve_graph_user(const char *access_token)
 {
         int id;
         const char *name;
@@ -32,7 +32,7 @@ user *retrieve_graph_user(char *access_token)
         return me;
 }
 
-user **getFriends(char *access_token)
+user **get_friends(const graph_session *gs, int limit)
 {
     int i;
     int friends_len;
@@ -49,7 +49,7 @@ user **getFriends(char *access_token)
     unsigned long friend_id;
 
     char *api_base = "https://graph.facebook.com/me?fields=friends&access_token=";
-    char *url = create_url(api_base, access_token);
+    char *url = create_url(api_base, gs->access_token);
 
     jobj = http_get_request_json(url);
 
