@@ -2,7 +2,7 @@
 #define _UTIL_H_
 
 #include <curl/curl.h>
-#include <stlib.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <json/json.h>
