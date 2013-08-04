@@ -4,9 +4,8 @@
 #include <limits.h>
 #include <fuse.h>
 #include <pthread.h>
-/*
-#include <graph/graph.h>
-*/
+
+#include "libgraph/graph.h"
 
 #define FBFS_LOG_PATH "/tmp/fbfs.log"
 
@@ -15,10 +14,8 @@ typedef struct fb_state {
 	char *root_dir;
         
         /*pthread_mutex_t friends_lock;*/
-        /*
         graph_session *session;
         user **friends;
-        */
 
         /*pthread_mutex_t init_lock;*/
 } fb_state;

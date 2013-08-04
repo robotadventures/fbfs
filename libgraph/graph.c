@@ -210,9 +210,9 @@ void post_on_timeline(const graph_session *session, char *message)
     char *postfields = calloc(strlen(access_post) + strlen(session->access_token) + strlen(message_post) + strlen(message) + 1, sizeof(char));
 
     /*Get url*/
-    strcpy(url, "https://graph.facebook.com/");
+    strcpy(url, "https://graph.facebook.com");
     sprintf(user_id, "%lu", session->me->id);
-    strcat(url, user_id);
+    /*strcat(url, user_id);*/
     strcat(url, "/feed");
 
     /*get postfields*/

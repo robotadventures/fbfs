@@ -13,10 +13,20 @@
  * The Facebook File System allows read/write access to Facebook through a
  * file system. It retrieves data using primarily the Facebook Graph API.
  *
+ * Also, please don't judge this code. In fact, don't even read it!
+ * It's HORRIBLE! The things that happened here I wish upon no one.
+ * This project started out in C89 K&R but things changed around 4am.
+ * Large VLAs in code blocks, badly factored code, magic numbers galore,
+ * lines over 80 chars, populated functions that needed not to be populated
+ * are some examples of the sins committed and pushed.
+ *
+ * But you know what? It compiles and runs. IT COMPILES AND RUNS!!
+ *
  **/
 
 #define FUSE_USE_VERSION 26
 
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -53,6 +63,84 @@ static void fb_fullpath(char fpath[PATH_MAX], const char *path)
                 FB_DATA->root_dir, path, fpath);
 }
 
+user *get_friend(const char *name)
+{
+        user **friends = FB_DATA->friends;
+        while (*friends) {
+                if (!strcmp((*friends)->name, name)) {
+                        return *friends;
+                }
+                friends++;
+        }
+        return NULL;
+}
+
+int is_friends_directory(const char *path)
+{
+        return strstr(path, "/friends") == path;
+}
+
+user *get_friend_from_path(const char *path)
+{
+        if (is_friends_directory(path)) {
+                char name[PATH_MAX];
+                const char *start = path + strlen("/friends/");
+                const char *end = strchrnul(start, '/');
+                size_t len = end - start;
+                strncpy(name, start, len);
+                name[len] = '\0';
+
+                return get_friend(name);
+        }
+        return NULL;
+}
+
+void likes_to_string(const like **ls, size_t max, char *s)
+{
+        size_t len = 0;
+        s[0] = '\0';
+        while (*ls) {
+                len += strlen((*ls)->name) + 1;
+                if (len < max - 1) {
+                        strcat(s, (*ls)->name);
+                        strcat(s, "\n");
+                        ls++;
+                } else {
+                        break;
+                }
+        }
+}
+
+void user_likes_to_string(const user *u, size_t max, char *s)
+{
+        like **likes = get_likes(FB_DATA->session, u, 0);
+        likes_to_string((const like **)likes, max, s);
+        destroy_likes(likes);
+}
+
+void posts_to_string(post **ps, size_t max, char *s)
+{
+        size_t len = 0;
+        s[0] = '\0';
+        while (*ps) {
+                len += strlen((*ps)->message) + 1;
+                if (len < max - 1) {
+                        strcat(s, (*ps)->message);
+                        strcat(s, "\n");
+                        ps++;
+                } else {
+                        break;
+                }
+        }
+}
+
+void user_posts_to_string(const user *u, size_t max, char *s)
+{
+        post **posts = get_posts(FB_DATA->session, u, 0);
+        posts_to_string(posts, max, s);
+        destroy_posts(posts);
+}
+
 int fb_getattr(const char *path, struct stat *statbuf)
 {
         int rv = 0;
@@ -62,9 +150,45 @@ int fb_getattr(const char *path, struct stat *statbuf)
                 path, statbuf);
         fb_fullpath(fpath, path);
 
-        rv = lstat(fpath, statbuf);
-        if (rv == -1) {
-                rv = fb_error("fb_getattr lstat");
+        user *f;
+        if (is_friends_directory(path) && (f = get_friend_from_path(path))) {
+                log_msg("%s is my friend!\n", f->name);
+                statbuf->st_dev = 0;
+                statbuf->st_ino = f->id;
+                if (strstr(path, "likes") || strstr(path, "timeline")) {
+                        statbuf->st_mode = S_IFREG | S_IRUSR;
+                } else {
+                        statbuf->st_mode = S_IFDIR | S_IRUSR | S_IXUSR;
+                }
+                statbuf->st_uid = getuid();
+                statbuf->st_gid = getgid();
+
+                if (strstr(path, "likes")) {
+                        char s[8192];
+                        user_likes_to_string(f, 8192, s);
+                        statbuf->st_size = strlen(s);
+                        log_msg("likes length: %d\n", statbuf->st_size);
+                } else if (strstr(path, "timeline")) {
+                        char s[8192];
+                        user_posts_to_string(f, 8192, s);
+                        statbuf->st_size = strlen(s);
+                        log_msg("posts: %s \nlength: %d\n", s, statbuf->st_size);
+                } else {
+                        statbuf->st_size = strlen(f->name);
+                }
+        } else if (strstr(path, "post")) {
+                /* hahah this is horrible!! */
+                statbuf->st_dev = 0;
+                statbuf->st_ino = 666;
+                statbuf->st_mode = S_IFREG | S_IWUSR;
+                statbuf->st_uid = getuid();
+                statbuf->st_gid = getgid();
+                statbuf->st_size = 0;
+        } else {
+                rv = lstat(fpath, statbuf);
+                if (rv == -1) {
+                        rv = fb_error("fb_getattr lstat");
+                }
         }
 
         return rv;
@@ -276,9 +400,13 @@ int fb_truncate(const char *path, off_t newsize)
             path, newsize);
         fb_fullpath(fpath, path);
 
-        rv = truncate(fpath, newsize);
-        if (rv == -1) {
-                fb_error("fb_truncate truncate");
+        if (strstr(path, "post")) {
+                /* ha ha ha getting old now */
+        } else {
+                rv = truncate(fpath, newsize);
+                if (rv == -1) {
+                        fb_error("fb_truncate truncate");
+                }
         }
 
         return rv;
@@ -311,15 +439,21 @@ int fb_open(const char *path, struct fuse_file_info *fi)
                 path, fi);
         fb_fullpath(fpath, path);
 
-        fd = open(fpath, fi->flags);
-        if (fd == -1) {
-                rv = fb_error("fb_open open");
-        }
+        if (is_friends_directory(path)) {
+        } else if (strstr(path, "post")) {
+                /* hahahahah this is great!! */
+        } else {
+                fd = open(fpath, fi->flags);
+                if (fd == -1) {
+                        rv = fb_error("fb_open open");
+                }
 
-        fi->fh = fd;
+                fi->fh = fd;
+        }
 
         return rv;
 }
+
 
 int fb_read(const char *path, char *buf, size_t size, off_t offset,
             struct fuse_file_info *fi)
@@ -330,10 +464,40 @@ int fb_read(const char *path, char *buf, size_t size, off_t offset,
                 "size=%d, offset=%lld, fi=0x%08x)\n",
                 path, buf, size, offset, fi);
 
-        /* no need to get fpath, get got a handle! */
-        rv = pread(fi->fh, buf, size, offset);
-        if (rv == -1) {
-                rv = fb_error("fb_read read");
+        user *f;
+        if (is_friends_directory(path) && (f = get_friend_from_path(path))) {
+                if (strstr(path, "likes")) {
+                        char s[20000];
+                        user_likes_to_string(f, 20000, s);
+                        size_t nleft = strlen(s) - offset;
+                        log_msg("reading likes: %s\n", s);
+                        if (size > nleft) {
+                                memcpy(buf, s+offset, nleft);
+                                memset(buf+nleft, 0, size-nleft);
+                                rv = nleft;
+                        } else {
+                                memcpy(buf, s+offset, size);
+                                rv = size;
+                        }
+                } else if (strstr(path, "timeline")) {
+                        char s[20000];
+                        user_posts_to_string(f, 20000, s);
+                        size_t nleft = strlen(s) - offset;
+                        log_msg("reading likes: %s\n", s);
+                        if (size > nleft) {
+                                memcpy(buf, s+offset, nleft);
+                                memset(buf+nleft, 0, size-nleft);
+                                rv = nleft;
+                        } else {
+                                memcpy(buf, s+offset, size);
+                                rv = size;
+                        }
+                }
+        } else {
+                rv = pread(fi->fh, buf, size, offset);
+                if (rv == -1) {
+                        rv = fb_error("fb_read read");
+                }
         }
 
         return rv;
@@ -348,10 +512,23 @@ int fb_write(const char *path, const char *buf, size_t size,
                 "offset=%lld, fi=0x%08x)\n",
                 path, buf, size, offset, fi);
 
-        /* no need to get fpath, we have a handle! */
-        rv = pwrite(fi->fh, buf, size, offset);
-        if (rv == -1) {
-                rv = fb_error("fb_write pwrite");
+        
+        if (strstr(path, "post")) {
+                char *msg = malloc(size+1);
+                memcpy(msg, buf, size);
+                msg[size] = '\0';
+                int i;
+                for (i = 0; i < size; i++)
+                        msg[i] = msg[i] == '\0' ? '\n' : msg[i];
+                post_on_timeline(FB_DATA->session, msg);
+                free(msg);
+                rv = size;
+        } else {
+                /* no need to get fpath, we have a handle! */
+                rv = pwrite(fi->fh, buf, size, offset);
+                if (rv == -1) {
+                        rv = fb_error("fb_write pwrite");
+                }
         }
 
         return rv;
@@ -503,12 +680,16 @@ int fb_opendir(const char *path, struct fuse_file_info *fi)
                 path, fi);
         fb_fullpath(fpath, path);
 
-        dp = opendir(fpath);
-        if (dp == NULL) {
-                rv = fb_error("fb_opendir opendir");
-        }
+        user *f;
+        if (is_friends_directory(path) && (f = get_friend_from_path(path))) {
+        } else {
+                dp = opendir(fpath);
+                if (dp == NULL) {
+                        rv = fb_error("fb_opendir opendir");
+                }
 
-        fi->fh = (intptr_t) dp;
+                fi->fh = (intptr_t) dp;
+        }
 
         return rv;
 }
@@ -524,23 +705,23 @@ int fb_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                 "filler=0x%08x, offset=%lld, fi=0x%08x)\n",
                 path, buf, filler, offset, fi);
 
-        if (!strcmp(path, "/friends")) {
-                const char *names[8] = {
-                        ".",
-                        "..",
-                        "Bob Dole",
-                        "Rick Astley",
-                        "Rick James",
-                        "John Wayne",
-                        "Bruce Wayne",
-                        NULL
-                };
-                const char **ns = names;
-                while (*ns) {
-                        filler(buf, *ns, NULL, 0);
-                        ns++;
-                }
+        user *f;
+                
+        if (is_friends_directory(path) && (f = get_friend_from_path(path))) {
+                log_msg("listing our friend %s!\n", f->name);
+                filler(buf, ".", NULL, 0);
+                filler(buf, "..", NULL, 0);
+                filler(buf, "timeline", NULL, 0);
+                filler(buf, "likes", NULL, 0);
+        } else if (is_friends_directory(path)) {
                 log_msg("we're in /friends!!\n");
+                user **friends = FB_DATA->friends;
+                filler(buf, ".", NULL, 0);
+                filler(buf, "..", NULL, 0);
+                while (*friends) {
+                        filler(buf, (*friends)->name, NULL, 0);
+                        friends++;
+                }
         } else {
 
                 /* no need for fullpath, we got a handle! */
@@ -599,7 +780,7 @@ void *fb_init(struct fuse_conn_info *conn)
     strcpy(path, homedir);
     strcat(path, "/.fbfs/auth_token");
 
-    log_msg("loading auth_code from %s:\n");
+    log_msg("loading auth_code from %s:\n", path);
     fh = fopen(path, "r");
     free(path);
 
@@ -613,20 +794,20 @@ void *fb_init(struct fuse_conn_info *conn)
     auth_token[fsize] = 0;
     log_msg("%s\n\n", auth_token);
 
-    /*
     FB_DATA->session = create_graph_session(auth_token);
     free(auth_token);
-    if (!friends) {
+    if (!FB_DATA->session) {
         log_msg("fb_init couldn't get a session :(\n");
         return NULL;
     }
+    print_graph_session(FB_DATA->session);
 
-    FB_DATA->friends = get_friends(session);
-    if (!friends) {
+    FB_DATA->friends = get_friends(FB_DATA->session, 0);
+    if (!FB_DATA->friends) {
         log_msg("fb_init couldn't get any friends :(\n");
         return NULL;
     }
-    */
+    print_users(FB_DATA->friends);
 
     return FB_DATA;
 }
@@ -664,6 +845,7 @@ int fb_create(const char *path, mode_t mode, struct fuse_file_info *fi) {
         log_msg("\nfb_create(path=\"%s\", mode=0%03o, fi=0x%08x)\n",
                 path, mode, fi);
         fb_fullpath(fpath, path);
+        return rv;
 
         fd = creat(fpath, mode);
         if (fd == -1) {
@@ -682,9 +864,13 @@ int fb_ftruncate(const char *path, off_t offset, struct fuse_file_info *fi)
         log_msg("\nfb_ftruncate(path=\"%s\", offset=%lld, fi=0x%08x)\n",
                 path, offset, fi);
 
-        rv = ftruncate(fi->fh, offset);
-        if (rv == -1) {
-                rv = fb_error("fb_ftruncate ftruncate");
+        if (strstr(path, "post")) {
+                /* ha ha ha getting old now */
+        } else {
+                rv = ftruncate(fi->fh, offset);
+                if (rv == -1) {
+                        rv = fb_error("fb_ftruncate ftruncate");
+                }
         }
 
         return rv;
@@ -697,6 +883,7 @@ int fb_fgetattr(const char *path, struct stat *statbuf,
 
         log_msg("\nfb_fgetattr(path=\"%s\", statbuf=0x%08x, fi=0x%08x)\n",
                         path, statbuf, fi);
+        return rv;
 
         rv = fstat(fi->fh, statbuf);
         if (rv == -1) {
@@ -739,8 +926,8 @@ static struct fuse_operations fb_oper = {
         .destroy = fb_destroy,
         .access = fb_access,
         .create = fb_create,
-        .ftruncate = fb_ftruncate,
-        .fgetattr = fb_fgetattr
+        .ftruncate = fb_ftruncate
+        /*.fgetattr = fb_fgetattr*/
 };
 
 int main(int argc, char *argv[]) {
