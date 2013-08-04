@@ -34,7 +34,7 @@ void destroy_user(user *u)
         }
 }
 
-void destroy_users(users **us)
+void destroy_users(user **us)
 {
         user **usr = us;
         if (!us) {
