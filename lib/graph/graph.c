@@ -3,6 +3,7 @@
  * Kaitlin Poskaitis, Joshua Matthews, and Wayne Chang
  */
 
+#include <string.h>
 #include "util.h"
 #include "graph.h"
 
@@ -80,4 +81,47 @@ user **getFriends(char *access_token)
     free(friend_name);
 
     return friends_arr;
+}
+
+post **get_posts(const graph_session *session, const user *user, int limit)
+{
+    int i;
+    char user_id[128];
+    char url[512];
+    int posts_len;
+
+    json_object *jobj;
+    json_object *post;
+    json_object *posts_obj;
+    json_object *posts_data;
+    json_object *post_id_obj;
+    json_object *post_to_obj;
+    json_object *post_from_obj;
+
+    post **posts_arr;
+
+    strcpy(url, "https://graph.facebook.com/");
+    sprintf(user_id, "%lu?", session->me->id);
+    strcat(url, user_id);
+    strcat(url, "fields=posts");
+    strcat(url, "&access_token=");
+    strcat(url, session->access_token);
+
+    jobj = http_get_request_json(url);
+
+    json_object_object_get_ex(jobj, "posts", &posts_obj);
+    json_object_object_get_ex(jobj, "posts", &posts_data);
+
+    posts_len = json_object_array_length(posts_data);
+
+    if(posts_len)
+    {
+        posts_arr = calloc(posts_len + 1, sizeof(post*));
+        for (i = 0; i < posts_len; ++i)
+        {
+            post = json_object_array_get_idx(posts_data, i);
+
+            json_object_object_get_ex(post, "id", &post_id_obj);
+        }
+    }
 }
