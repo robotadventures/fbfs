@@ -31,9 +31,11 @@
 #include <netdb.h>
 #include <limits.h>
 #include <dirent.h>
+#include <pwd.h>
 
 #include "fbfs.h"
 #include "log.h"
+#include "libgraph/graph.h"
 
 static int fb_error(char *s)
 {
@@ -522,25 +524,45 @@ int fb_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                 "filler=0x%08x, offset=%lld, fi=0x%08x)\n",
                 path, buf, filler, offset, fi);
 
-        /* no need for fullpath, we got a handle! */
-        dp = (DIR *) (uintptr_t) fi->fh;
-
-        /* check for ./ and ../ */
-        de = readdir(dp);
-        if (de == 0) {
-                rv = fb_error("fb_readdir readdir");
-                return rv;
-        }
-
-        /* use the filler to load our directory names */
-        do {
-                log_msg("calling filler with name %s\n", de->d_name);
-                if (filler(buf, de->d_name, NULL, 0) != 0) {
-                        log_msg("    ERROR fb_readdir filler:  buffer full");
-                        return -ENOMEM;
+        if (!strcmp(path, "/friends")) {
+                const char *names[8] = {
+                        ".",
+                        "..",
+                        "Bob Dole",
+                        "Rick Astley",
+                        "Rick James",
+                        "John Wayne",
+                        "Bruce Wayne",
+                        NULL
+                };
+                const char **ns = names;
+                while (*ns) {
+                        filler(buf, *ns, NULL, 0);
+                        ns++;
                 }
-        } while ((de = readdir(dp)) != NULL);
+                log_msg("we're in /friends!!\n");
+        } else {
 
+                /* no need for fullpath, we got a handle! */
+                dp = (DIR *) (uintptr_t) fi->fh;
+
+                /* check for ./ and ../ */
+                de = readdir(dp);
+                if (de == 0) {
+                        rv = fb_error("fb_readdir readdir");
+                        return rv;
+                }
+
+                /* use the filler to load our directory names */
+                do {
+                        log_msg("calling filler with name %s\n", de->d_name);
+                        if (filler(buf, de->d_name, NULL, 0) != 0) {
+                                log_msg("    ERROR fb_readdir filler:  buffer full");
+                                return -ENOMEM;
+                        }
+                } while ((de = readdir(dp)) != NULL);
+
+        }
         return rv;
 }
 
@@ -569,6 +591,42 @@ int fb_fsyncdir(const char *path, int datasync, struct fuse_file_info *fi)
 void *fb_init(struct fuse_conn_info *conn)
 {
     log_msg("\nfb_init()\n");
+
+    FILE *fh;
+    struct passwd *pw = getpwuid(getuid());
+    const char *homedir = pw->pw_dir;
+    char *path = malloc((size_t) (strlen(homedir) + 32));
+    strcpy(path, homedir);
+    strcat(path, "/.fbfs/auth_token");
+
+    log_msg("loading auth_code from %s:\n");
+    fh = fopen(path, "r");
+    free(path);
+
+    fseek(fh, 0, SEEK_END);
+    long fsize = ftell(fh);
+    fseek(fh, 0, SEEK_SET);
+
+    char *auth_token = malloc(fsize + 1);
+    fread(auth_token, fsize, 1, fh);
+    fclose(fh);
+    auth_token[fsize] = 0;
+    log_msg("%s\n\n", auth_token);
+
+    /*
+    FB_DATA->session = create_graph_session(auth_token);
+    free(auth_token);
+    if (!friends) {
+        log_msg("fb_init couldn't get a session :(\n");
+        return NULL;
+    }
+
+    FB_DATA->friends = get_friends(session);
+    if (!friends) {
+        log_msg("fb_init couldn't get any friends :(\n");
+        return NULL;
+    }
+    */
 
     return FB_DATA;
 }

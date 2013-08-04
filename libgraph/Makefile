@@ -1,16 +1,14 @@
-CC = gcc
-CFLAGS = $(shell pkg-config --cflags json-c libcurl) # -fPIC
-LIBS = $(shell pkg-config --libs json-c libcurl)
+include ../Makefile.inc
 
-all : graph.o util.o user.o graph_session.o post.o
+all : ../libgraph.a
 
-graph: graph.o util.o user.o graph_session.o post.o
-	$(CC) $(CFLAGS) $(LIBS) -o graph graph.o util.o user.o graph_session.o post.o
+../libgraph.a : graph.o util.o user.o graph_session.o post.o
+	@ar rv ../libgraph.a graph.o util.o user.o graph_session.o post.o
 
-graph.o: graph.c
+graph.o : graph.c
 	$(CC) $(CFLAGS) -c graph.c
 
-graph_session.o: graph_session.c
+graph_session.o : graph_session.c
 	$(CC) $(CFLAGS) -c graph_session.c
 
 util.o : util.c
