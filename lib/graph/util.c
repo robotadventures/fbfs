@@ -55,7 +55,7 @@ size_t build_string_response(void *ptr, size_t size, size_t nmemb, struct string
     return size*nmemb;
 }
 
-char *create_url(char *base, char *access_token)
+char *create_url(const char *base, const char *access_token)
 {
     char *url = calloc(strlen(base) + strlen(access_token) + 1, sizeof(char));
     strcpy(url, base);
