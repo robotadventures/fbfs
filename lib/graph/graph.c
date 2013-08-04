@@ -3,64 +3,54 @@
  * Kaitlin Poskaitis, Joshua Matthews, and Wayne Chang
  */
 
+#include "util.h"
 #include "graph.h"
 
-char **getFriends(char *access_token)
+user **getFriends(char *access_token)
 {
-    CURLcode res;
-    CURL *curl = curl_easy_init();
-    if(curl)
-    {
-        /*Set up response string*/
-        struct string response;
-        init_string(&response);
+    int i;
+    int friends_len;
+    json_object *jobj;
+    json_object *friend;
+    json_object *friends_data;
+    json_object *friend_id_obj;
+    json_object *friend_name_obj;
 
-        curl_easy_setopt(curl, CURLOPT_URL, "https://graph.facebook.com/me?fields=friends");
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, buildStringResponse);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-        res = curl_easy_perform(curl);
-        if(res != CURLE_OK)
+    user **friends_arr = NULL;
+
+    char *friend_name;
+    unsigned long friend_id;
+
+    char *api_base = "https://graph.facebook.com/me?fields=friends&access_token=";
+    char *url = create_url(api_base, access_token);
+
+    jobj = http_get_request_json(url);
+
+    json_object_object_get_ex(jobj, "friends", friends_obj);
+    json_object_object_get_ex(friends_obj, "data", friends_data);
+
+    friends_len = json_object_array_length(friends_data, "data");
+    if(friends_len)
+    {
+        /*NULL terminated array*/
+        friends_arr = calloc(friends_len + 1, sizeof(user*));
+        for (i = 0; i < friends_len; ++i)
         {
-            fprintf(stderr, "Could not get friends.\n");
+            friend = json_object_array_get_idx(i);
+
+            json_object_object_get_ex(friend, "id", friend_id_obj);
+            json_object_object_get_ex(friend, "name", friend_name_obj);
+
+            friend_id = atoi(json_object_get_string(friend_id_obj));
+            friend_name = json_object_get_string(friend_name_obj);
+
+            friend_arr[i] = create_user(friend_id, friend_name);
         }
-
-        curl_easy_cleanup(curl);
-
     }
-    fprintf(stderr, "Could not init CURL to get friends.\n");
-    return NULL;
-}
 
-//Helpers
+    json_object_put(jobj);
+    free(url);
+    free(friend_name);
 
-size_t buildStringResponse(void *ptr, size_t size, size_t nmemb, struct string *s)
-{
-    size_t new_len = s->len + size*nmemb;
-    s->ptr = realloc(s->ptr, new_len+1);
-    if (s->ptr == NULL) {
-        fprintf(stderr, "realloc() failed\n");
-        exit(EXIT_FAILURE);
-    }
-    memcpy(s->ptr+s->len, ptr, size*nmemb);
-    s->ptr[new_len] = '\0';
-    s->len = new_len;
-
-    return size*nmemb;
-}
-
-void init_string(struct string *s)
-{
-    s->len = 0;
-    s->ptr = malloc(s->len+1);
-    if(s->ptr == NULL)
-    {
-        fprintf(stderr, "Could not malloc string\n");
-        exit(EXIT_FAILURE);
-    }
-    s->ptr[0] = '\0';
-}
-
-void destroy_string(struct string *s)
-{
-    free(s->ptr);
+    return friend_arr;
 }

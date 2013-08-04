@@ -1,6 +1,14 @@
 #ifndef _GRAPH_H_
 #define _GRAPH_H_
 
+#ifndef _UTIL_H_
+#define _UTIL_H_
+#include <stlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <json/json.h>
+#endif
+
 typedef struct user {
         unsigned long id;
         char *name;
@@ -51,4 +59,3 @@ void print_interest(interest *);
 void print_interests(interest **);
 
 #endif
-
