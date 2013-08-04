@@ -14,7 +14,7 @@ typedef struct string {
 } string;
 
 /*Utility functions*/
-json_object http_get_request_json(char *url);
+json_object *http_get_request_json(char *url);
 size_t build_string_response(void *ptr, size_t size, size_t nmemb, struct string *s);
 char *create_url(char *base, char *access_token);
 void init_string(struct string *s);

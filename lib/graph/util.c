@@ -4,7 +4,7 @@
  */
 #include "util.h"
 
-json_object http_get_request_json(char *url)
+json_object *http_get_request_json(char *url)
 {
     CURLcode res;
     CURL *curl = curl_easy_init();
@@ -17,8 +17,8 @@ json_object http_get_request_json(char *url)
         string response;
         init_string(&response);
 
-        curl_easy_setopt(curl, CURLOPT_URL, endpoint);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, buildStringResponse);
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, build_string_response);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
         res = curl_easy_perform(curl);
