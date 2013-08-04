@@ -3,6 +3,7 @@
  * Kaitlin Poskaitis, Joshua Matthews, and Wayne Chang
  */
 
+#include <string.h>
 #include "util.h"
 #include "graph.h"
 
@@ -80,4 +81,84 @@ user **get_friends(const graph_session *gs, int limit)
     free(friend_name);
 
     return friends_arr;
+}
+
+post **get_posts(const graph_session *session, const user *target_user, int limit)
+{
+    int i;
+    char user_id[128];
+    char url[512];
+    int posts_len;
+    unsigned long int to_id, from_id, post_id;
+    char *to_name, *from_name, *post_message;
+
+    json_object *jobj;
+    json_object *post_obj;
+    json_object *posts_obj;
+    json_object *posts_data;
+    json_object *post_id_obj;
+    json_object *post_to_obj;
+    json_object *post_from_obj;
+    json_object *from_name_obj;
+    json_object *from_id_obj;
+    json_object *to_name_obj;
+    json_object *to_id_obj;
+    json_object *post_message_obj;
+
+    post **posts_arr;
+
+    user *to_user;
+    user *from_user;
+
+    strcpy(url, "https://graph.facebook.com/");
+    sprintf(user_id, "%lu?", target_user->id);
+    strcat(url, user_id);
+    strcat(url, "fields=posts");
+    strcat(url, "&access_token=");
+    strcat(url, session->access_token);
+
+    jobj = http_get_request_json(url);
+
+    json_object_object_get_ex(jobj, "posts", &posts_obj);
+    json_object_object_get_ex(jobj, "posts", &posts_data);
+
+    posts_len = json_object_array_length(posts_data);
+
+    if(posts_len)
+    {
+        posts_arr = calloc(posts_len + 1, sizeof(post*));
+        for (i = 0; i < posts_len; ++i)
+        {
+            post_obj = json_object_array_get_idx(posts_data, i);
+
+            json_object_object_get_ex(post_obj, "id", &post_id_obj);
+            json_object_object_get_ex(post_obj, "to", &post_to_obj);
+            json_object_object_get_ex(post_obj, "from", &post_from_obj);
+            json_object_object_get_ex(post_obj, "message", &post_message_obj);
+
+            json_object_object_get_ex(post_from_obj, "id", &from_id_obj);
+            json_object_object_get_ex(post_from_obj, "name", &from_name_obj);
+            from_id = atoi(json_object_get_string(from_id_obj));
+            from_name = (char*)json_object_get_string(from_name_obj);
+            from_user = create_user(from_id, from_name);
+
+            json_object_object_get_ex(post_to_obj, "id", &to_id_obj);
+            json_object_object_get_ex(post_to_obj, "name", &to_name_obj);
+            to_id = atoi(json_object_get_string(to_id_obj));
+            to_name = (char*)json_object_get_string(to_name_obj);
+            to_user = create_user(to_id, to_name);
+
+            json_object_object_get_ex(post_obj, "id", &post_id_obj);
+            post_id = atoi(json_object_get_string(post_id_obj));
+
+            json_object_object_get_ex(post_obj, "message", &post_message_obj);
+            post_message = (char*)json_object_get_string(post_message_obj);
+
+            posts_arr[i] = create_post(post_id, to_user, from_user, post_message);
+        }
+    }
+
+    json_object_put(jobj);
+
+    return posts_arr;
 }
