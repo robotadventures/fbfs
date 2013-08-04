@@ -1,5 +1,8 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+
+#include "graph.h"
 
 post *create_post(unsigned long id, const user *to, const user *from,
                   const char *message)
@@ -69,7 +72,7 @@ void destroy_posts(post **ps)
 
 void print_post(post *p)
 {
-        printf("post { id: %d, to: \"%s\", from: \"%s\", message: \"%s\" }\n",
+        printf("post { id: %ld, to: \"%s\", from: \"%s\", message: \"%s\" }\n",
                p->id, p->to->name, p->from->name, p->message);
 }
 

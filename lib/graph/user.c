@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "graph.h"
@@ -49,7 +50,7 @@ void destroy_users(user **us)
 
 void print_user(user *u)
 {
-        printf("user { id: %d, name: \"%s\" }\n", u->id, u->name);
+        printf("user { id: %ld, name: \"%s\" }\n", u->id, u->name);
 }
 
 void print_users(user **us)

@@ -3,7 +3,12 @@
  * Kaitlin Poskaitis, Joshua Matthews, and Wayne Chang
  */
 
+#include <curl/curl.h>
+#include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <json/json.h>
+
 #include "util.h"
 #include "graph.h"
 
@@ -162,3 +167,4 @@ post **get_posts(const graph_session *session, const user *target_user, int limi
 
     return posts_arr;
 }
+

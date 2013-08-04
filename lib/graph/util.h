@@ -20,3 +20,4 @@ char *create_url(const char *base, const char *access_token);
 void init_string(struct string *s);
 void destroy_string(struct string *s);
 #endif
+
