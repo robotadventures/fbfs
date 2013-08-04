@@ -9,7 +9,7 @@
 user *retrieve_graph_user(char *access_token)
 {
         int id;
-        char *name;
+        const char *name;
         char *url = create_url("https://graph.facebook.com/me?fields=name&access_token=", access_token);
         json_object *jobj;
         json_object *name_obj;
@@ -21,13 +21,15 @@ user *retrieve_graph_user(char *access_token)
         json_object_object_get_ex(jobj, "name", &name_obj);
         json_object_object_get_ex(jobj, "id", &id_obj);
 
-        name = (char *) json_object_get_string(name_obj);
+        name = json_object_get_string(name_obj);
         id = (unsigned long) atoi(json_object_get_string(id_obj));
+
+        user *me = create_user(id, name);
 
         json_object_put(jobj);
         free(url);
 
-        return create_user(id, name);
+        return me;
 }
 
 user **getFriends(char *access_token)
