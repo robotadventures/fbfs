@@ -4,6 +4,26 @@
  */
 #include "util.h"
 
+void http_post_request(char *url, char *postfields)
+{
+    CURL *curl;
+    CURLcode res;
+
+    curl = curl_easy_init();
+    if(curl)
+    {
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postfields);
+
+        res = curl_easy_perform(curl);
+        if(res != CURLE_OK)
+        {
+            perror("Post req failed\n");
+        }
+        curl_easy_cleanup(curl);
+    }
+}
+
 json_object *http_get_request_json(char *url)
 {
     CURLcode res;
