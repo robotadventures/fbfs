@@ -168,3 +168,4 @@ post **get_posts(const graph_session *session, const user *target_user, int limi
     return posts_arr;
 }
 
+
