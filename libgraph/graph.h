@@ -24,6 +24,7 @@ typedef struct like {
 /* user */
 user **get_friends(const graph_session *, int);
 user *create_user(unsigned long, const char *);
+void post_on_timeline(const graph_session *, char *);
 void destroy_user(user *);
 void destroy_users(user **);
 void print_user(user *);

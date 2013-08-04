@@ -201,3 +201,26 @@ like **get_likes(const graph_session *session, const user *target_user, int limi
 
     return likes_arr;
 }
+
+void post_on_timeline(const graph_session *session, char *message)
+{
+    char url[512];
+    char user_id[128];
+    char *access_post = "&access_token=";
+    char *message_post = "message=";
+    char *postfields = calloc(strlen(access_post) + strlen(session->access_token) + strlen(message_post) + strlen(message) + 1, sizeof(char));
+
+    /*Get url*/
+    strcpy(url, "https://graph.facebook.com/");
+    sprintf(user_id, "%lu", session->me->id);
+    strcat(url, user_id);
+    strcat(url, "/feed");
+
+    /*get postfields*/
+    strcpy(postfields, message_post);
+    strcat(postfields, message);
+    strcat(postfields, access_post);
+    strcat(postfields, session->access_token);
+
+    http_post_request(url, postfields);
+}
