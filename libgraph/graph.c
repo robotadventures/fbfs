@@ -89,7 +89,7 @@ user **get_friends(const graph_session *gs, int limit)
 
 post **get_posts(const graph_session *session, const user *target_user, int limit)
 {
-    int i, j=0;
+    int i, j=-1;
     char user_id[128];
     char url[512];
     int posts_len;
