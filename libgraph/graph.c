@@ -158,4 +158,46 @@ post **get_posts(const graph_session *session, const user *target_user, int limi
     return posts_arr;
 }
 
+like **get_likes(const graph_session *session, const user *target_user, int limit)
+{
+    like **likes_arr = NULL;
+    like *l;
 
+    char url[512];
+    char user_id[128];
+    int likes_len, i;
+
+    json_object *jobj;
+    json_object *likes_obj;
+    json_object *data_obj;
+    json_object *like_obj;
+    json_object *name_obj;
+
+    strcpy(url, "https://graph.facebook.com/");
+    sprintf(user_id, "%lu", target_user->id);
+    strcat(url, user_id);
+    strcat(url, "?fields=likes");
+    strcat(url, "&access_token=");
+    strcat(url, session->access_token);
+
+    jobj = http_get_request_json(url);
+    json_object_object_get_ex(jobj, "likes", &likes_obj);
+    json_object_object_get_ex(likes_obj, "data", &data_obj);
+
+    likes_len = json_object_array_length(data_obj);
+
+    if(likes_len)
+    {
+        likes_arr = calloc(likes_len + 1, sizeof(like*));
+        for(i = 0; i < likes_len; ++i)
+        {
+            like_obj = json_object_array_get_idx(data_obj, i);
+            json_object_object_get_ex(like_obj, "name", &name_obj);
+            l = create_like(json_object_get_string(name_obj));
+            likes_arr[i] = l;
+        }
+    }
+    json_object_put(jobj);
+
+    return likes_arr;
+}
