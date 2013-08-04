@@ -3,7 +3,7 @@
 
 #ifndef _UTIL_H_
 #define _UTIL_H_
-#include <stlib.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <json/json.h>
