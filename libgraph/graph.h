@@ -17,9 +17,9 @@ typedef struct post {
         char *message;
 } post;
 
-typedef struct interest {
+typedef struct like {
         char *name;
-} interest;
+} like;
 
 /* user */
 user **get_friends(const graph_session *, int);
@@ -43,13 +43,13 @@ void destroy_posts(post **);
 void print_post(post *);
 void print_posts(post **);
 
-/* interest */
-interest **get_interests(const graph_session *, const user *, int);
-interest *create_interest(const char *);
-void destroy_interest(interest *);
-void destroy_interests(interest **);
-void print_interest(interest *);
-void print_interests(interest **);
+/* like */
+like **get_likes(const graph_session *, const user *, int);
+like *create_like(const char *);
+void destroy_like(like *);
+void destroy_likes(like**);
+void print_like(like*);
+void print_likes(like**);
 
 #endif
 
