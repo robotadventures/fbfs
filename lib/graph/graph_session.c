@@ -45,6 +45,6 @@ void destroy_graph_session(graph_session *gs)
 void print_graph_session(graph_session *gs)
 {
         printf("graph_session { user: \"%s\", access_token: \"%s\" }\n",
-               gs->user->name, gs->access_token);
+               gs->me->name, gs->access_token);
 }
 
