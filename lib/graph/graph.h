@@ -30,7 +30,7 @@ typedef struct interest {
 } interest;
 
 /* user */
-user **get_friends(const graph_session *, const user *, int);
+user **get_friends(const graph_session *, int);
 user *create_user(unsigned long, const char *);
 void destroy_user(user *);
 void destroy_users(user **);
