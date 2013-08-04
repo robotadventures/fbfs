@@ -8,7 +8,7 @@ CONFIG_DIRECTORY = ENV["HOME"] + "/.fbfs"
 TOKEN_FILE = "auth_token"
 
 get '/' do
-  redirect "https://www.facebook.com/dialog/oauth?client_id=#{CLIENT_ID}&redirect_uri=#{REDIRCT_URI}&response_type=token"
+  redirect "https://www.facebook.com/dialog/oauth?client_id=#{CLIENT_ID}&redirect_uri=#{REDIRCT_URI}&response_type=token&scope=user_interests"
 end
 
 get '/success' do
