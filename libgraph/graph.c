@@ -112,7 +112,7 @@ post **get_posts(const graph_session *session, const user *target_user, int limi
     strcpy(url, "https://graph.facebook.com/");
     sprintf(user_id, "%lu", target_user->id);
     strcat(url, user_id);
-    strcat(url, "/posts?fields=id,message,from&limit=50");
+    strcat(url, "/posts?fields=id,message,from");
     strcat(url, "&access_token=");
     strcat(url, session->access_token);
 
