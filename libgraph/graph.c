@@ -90,7 +90,7 @@ user **get_friends(const graph_session *gs, int limit)
 
 post **get_posts(const graph_session *session, const user *target_user, int limit)
 {
-    int i;
+    int i, j=0;
     char user_id[128];
     char url[512];
     int posts_len;
@@ -99,33 +99,27 @@ post **get_posts(const graph_session *session, const user *target_user, int limi
 
     json_object *jobj;
     json_object *post_obj;
-    json_object *posts_obj;
     json_object *posts_data;
     json_object *post_id_obj;
-    json_object *post_to_obj;
     json_object *post_from_obj;
     json_object *from_name_obj;
     json_object *from_id_obj;
-    json_object *to_name_obj;
-    json_object *to_id_obj;
     json_object *post_message_obj;
 
     post **posts_arr;
 
-    user *to_user;
     user *from_user;
 
     strcpy(url, "https://graph.facebook.com/");
-    sprintf(user_id, "%lu?", target_user->id);
+    sprintf(user_id, "%lu", target_user->id);
     strcat(url, user_id);
-    strcat(url, "fields=posts");
+    strcat(url, "/posts?fields=id,message,from&limit=50");
     strcat(url, "&access_token=");
     strcat(url, session->access_token);
 
     jobj = http_get_request_json(url);
 
-    json_object_object_get_ex(jobj, "posts", &posts_obj);
-    json_object_object_get_ex(jobj, "posts", &posts_data);
+    json_object_object_get_ex(jobj, "data", &posts_data);
 
     posts_len = json_object_array_length(posts_data);
 
@@ -136,30 +130,26 @@ post **get_posts(const graph_session *session, const user *target_user, int limi
         {
             post_obj = json_object_array_get_idx(posts_data, i);
 
-            json_object_object_get_ex(post_obj, "id", &post_id_obj);
-            json_object_object_get_ex(post_obj, "to", &post_to_obj);
-            json_object_object_get_ex(post_obj, "from", &post_from_obj);
-            json_object_object_get_ex(post_obj, "message", &post_message_obj);
+            if(json_object_object_get_ex(post_obj, "message", &post_message_obj))
+            {
+                ++j;
+                json_object_object_get_ex(post_obj, "id", &post_id_obj);
+                json_object_object_get_ex(post_obj, "from", &post_from_obj);
 
-            json_object_object_get_ex(post_from_obj, "id", &from_id_obj);
-            json_object_object_get_ex(post_from_obj, "name", &from_name_obj);
-            from_id = atoi(json_object_get_string(from_id_obj));
-            from_name = (char*)json_object_get_string(from_name_obj);
-            from_user = create_user(from_id, from_name);
+                json_object_object_get_ex(post_from_obj, "id", &from_id_obj);
+                json_object_object_get_ex(post_from_obj, "name", &from_name_obj);
+                from_id = atoi(json_object_get_string(from_id_obj));
+                from_name = (char*)json_object_get_string(from_name_obj);
+                from_user = create_user(from_id, from_name);
 
-            json_object_object_get_ex(post_to_obj, "id", &to_id_obj);
-            json_object_object_get_ex(post_to_obj, "name", &to_name_obj);
-            to_id = atoi(json_object_get_string(to_id_obj));
-            to_name = (char*)json_object_get_string(to_name_obj);
-            to_user = create_user(to_id, to_name);
+                json_object_object_get_ex(post_obj, "id", &post_id_obj);
+                post_id = atoi(json_object_get_string(post_id_obj));
 
-            json_object_object_get_ex(post_obj, "id", &post_id_obj);
-            post_id = atoi(json_object_get_string(post_id_obj));
+                json_object_object_get_ex(post_obj, "message", &post_message_obj);
+                post_message = (char*)json_object_get_string(post_message_obj);
 
-            json_object_object_get_ex(post_obj, "message", &post_message_obj);
-            post_message = (char*)json_object_get_string(post_message_obj);
-
-            posts_arr[i] = create_post(post_id, to_user, from_user, post_message);
+                posts_arr[j] = create_post(post_id, target_user, from_user, post_message);
+            }
         }
     }
 

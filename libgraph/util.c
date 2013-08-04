@@ -22,6 +22,7 @@ json_object *http_get_request_json(char *url)
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
         res = curl_easy_perform(curl);
+
         if(res != CURLE_OK)
         {
             fprintf(stderr, "Could not get friends.\n");

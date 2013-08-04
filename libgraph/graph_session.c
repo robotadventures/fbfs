@@ -12,7 +12,7 @@ graph_session *create_graph_session(const char *access_token)
                 return NULL;
         }
 
-        user *u = retrieve_graph_user(access_token);       
+        user *u = retrieve_graph_user(access_token);
         if (!u) {
                 perror("create_graph_session retrieve_graph_user");
                 free(gs);
